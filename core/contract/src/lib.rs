@@ -37,6 +37,19 @@ impl Contract {
         return self.proposal_count.clone();
     }
 
+    // Public method - returns all proposals stored
+    pub fn get_all_proposals(&self) -> BTreeMap<u128, String> {
+        return self.proposal_vals.clone();
+    }
+
+    // Public method - get all the votes for given proposal ID
+    pub fn get_all_votes(&self, proposal_id: u128) -> Vec<(AccountId, bool)> {
+       if  self.proposal_votes.get(&proposal_id).is_none() {
+        return Vec::new();
+       }
+        return self.proposal_votes.get(&proposal_id).clone().unwrap().to_vec();
+    }
+    
     // Public method - creates a new proposal
     pub fn create_proposal(&mut self, proposal_text: String) {
         let owner: AccountId = env::predecessor_account_id();
