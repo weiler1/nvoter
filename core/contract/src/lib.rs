@@ -109,6 +109,36 @@ impl Contract {
         
         
     }
+
+    // Public method - allow the proposal creator to void the proposal if too few votes
+    pub fn void_proposal(&mut self, proposal_id: u128) -> bool{
+        let proposal_exists = self.proposal_vals.get(&proposal_id);
+        assert!(!proposal_exists.is_none(), "Proposal does not Exist");
+        let proposal_status = self.proposal_fate.get(&proposal_id);
+        assert!(proposal_status.is_none(), "Proposal has Already Closed!");
+        let caller: AccountId = env::predecessor_account_id();
+        assert_eq!(&caller, self.proposal_owners.get(&proposal_id.clone()).unwrap());
+        log!("Voiding Proposal: {}", proposal_id);
+        let votes_vec = self.proposal_votes.get(&proposal_id).unwrap().clone();
+        let mut upvotes : u128 = 0;
+        for item in votes_vec.clone() {
+            if item.1 {
+                upvotes += 1;
+            }
+        }
+        if upvotes == 0{
+            self.proposal_fate.insert(proposal_id, false);
+            self.rejected_proposal_count += 1;
+            return true;
+        }
+        else {
+            
+            
+            return false;
+        }
+        
+        
+    }
 }
 
 /*
@@ -185,6 +215,22 @@ mod tests {
         contract.vote_on_proposal(1, true);
         set_context(acc1.clone(), 10*NEAR);
         let result = contract.close_proposal(1);
+        assert_eq!(
+            result,
+            true
+        );
+       
+    }
+
+    #[test]
+    fn test_void_proposal() {
+        let mut contract = Contract::default();
+        let acc1: AccountId = "harry.near".parse().unwrap();
+        set_context(acc1.clone(), 10*NEAR);
+        contract.create_proposal("Should bears be legal pets?".to_string());
+        
+        set_context(acc1.clone(), 10*NEAR);
+        let result = contract.void_proposal(1);
         assert_eq!(
             result,
             true
